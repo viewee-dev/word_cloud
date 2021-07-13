@@ -991,11 +991,60 @@ class WordCloud(object):
                 )
             )
 
-        # TODO draw contour
+    def to_attribute(self):
+        """Export to attribute for react component.
 
-        # Complete SVG file
-        result.append('</svg>')
-        return '\n'.join(result)
+        content : string
+            Word cloud image as attribute React component 
+        """
+
+        # TODO should add option to specify URL for font (i.e. WOFF file)
+
+        # Make sure layout is generated
+        self._check_generated()
+
+        # Text buffer
+        result = []
+
+        # For each word in layout
+        for (word, count), font_size, (y, x), orientation, color in self.layout_:
+            x *= self.scale
+            y *= self.scale
+
+            # Get text metrics
+            font = ImageFont.truetype(
+                self.font_path, int(font_size * self.scale))
+            (size_x, size_y), (offset_x, offset_y) = font.font.getsize(word)
+            ascent, descent = font.getmetrics()
+
+            # Compute text bounding box
+            min_x = -offset_x
+            max_x = size_x - offset_x
+            max_y = ascent - offset_y
+
+            # Compute text attributes
+            attributes = {}
+            if orientation == Image.ROTATE_90:
+                x += max_y
+                y += max_x - min_x
+                transform = 'translate({},{}) rotate(-90)'.format(x, y)
+            else:
+                x += min_x
+                y += max_y
+                transform = 'translate({},{})'.format(x, y)
+
+            # Create node
+            attributes = ' '.join('{}="{}"'.format(k, v)
+                                  for k, v in attributes.items())
+            result.append({
+                'transform': transform,
+                'font_size': font_size * self.scale,
+                'color': color,
+                'word': saxutils.escape(word)
+            }
+            )
+
+        return result
 
     def _get_bolean_mask(self, mask):
         """Cast to two dimensional boolean mask."""
