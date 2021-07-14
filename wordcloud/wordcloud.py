@@ -1000,7 +1000,7 @@ class WordCloud(object):
                 )
             )
 
-    def to_attribute(self, optimize_embedded_font=True, embed_image=False):
+    def to_attribute(self, optimize_embedded_font=True):
         """Export to attribute for react component.
 
         content : string
