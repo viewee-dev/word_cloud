@@ -31,8 +31,10 @@ from .query_integral_image import query_integral_image
 from .tokenization import unigrams_and_bigrams, process_tokens
 
 FILE = os.path.dirname(__file__)
-FONT_PATH = os.environ.get('FONT_PATH', os.path.join(FILE, 'DroidSansMono.ttf'))
-STOPWORDS = set(map(str.strip, open(os.path.join(FILE, 'stopwords')).readlines()))
+FONT_PATH = os.environ.get(
+    'FONT_PATH', os.path.join(FILE, 'DroidSansMono.ttf'))
+STOPWORDS = set(
+    map(str.strip, open(os.path.join(FILE, 'stopwords')).readlines()))
 
 
 class IntegralOccupancyMap(object):
@@ -101,6 +103,7 @@ class colormap_color_func(object):
     >>> WordCloud(color_func=colormap_color_func("magma"))
 
     """
+
     def __init__(self, colormap):
         import matplotlib.pyplot as plt
         self.colormap = plt.cm.get_cmap(colormap)
@@ -405,7 +408,8 @@ class WordCloud(object):
 
         """
         # make sure frequencies are sorted and normalized
-        frequencies = sorted(frequencies.items(), key=itemgetter(1), reverse=True)
+        frequencies = sorted(frequencies.items(),
+                             key=itemgetter(1), reverse=True)
         if len(frequencies) <= 0:
             raise ValueError("We need at least 1 word to plot a word cloud, "
                              "got %d." % len(frequencies))
@@ -588,11 +592,13 @@ class WordCloud(object):
             words = [word for word in words if not word.isdigit()]
         # remove short words
         if self.min_word_length:
-            words = [word for word in words if len(word) >= self.min_word_length]
+            words = [word for word in words if len(
+                word) >= self.min_word_length]
 
         stopwords = set([i.lower() for i in self.stopwords])
         if self.collocations:
-            word_counts = unigrams_and_bigrams(words, stopwords, self.normalize_plurals, self.collocation_threshold)
+            word_counts = unigrams_and_bigrams(
+                words, stopwords, self.normalize_plurals, self.collocation_threshold)
         else:
             # remove stopwords
             words = [word for word in words if word.lower() not in stopwords]
@@ -816,7 +822,8 @@ class WordCloud(object):
         result = []
 
         # Get font information
-        font = ImageFont.truetype(self.font_path, int(max_font_size * self.scale))
+        font = ImageFont.truetype(
+            self.font_path, int(max_font_size * self.scale))
         raw_font_family, raw_font_style = font.getname()
         # TODO properly escape/quote this name?
         font_family = repr(raw_font_family)
@@ -953,7 +960,8 @@ class WordCloud(object):
             y *= self.scale
 
             # Get text metrics
-            font = ImageFont.truetype(self.font_path, int(font_size * self.scale))
+            font = ImageFont.truetype(
+                self.font_path, int(font_size * self.scale))
             (size_x, size_y), (offset_x, offset_y) = font.font.getsize(word)
             ascent, descent = font.getmetrics()
 
@@ -974,7 +982,8 @@ class WordCloud(object):
                 transform = 'translate({},{})'.format(x, y)
 
             # Create node
-            attributes = ' '.join('{}="{}"'.format(k, v) for k, v in attributes.items())
+            attributes = ' '.join('{}="{}"'.format(k, v)
+                                  for k, v in attributes.items())
             result.append(
                 '<text'
                 ' transform="{}"'
@@ -1003,8 +1012,40 @@ class WordCloud(object):
         # Make sure layout is generated
         self._check_generated()
 
+        # Get output size, in pixels
+        if self.mask is not None:
+            width = self.mask.shape[1]
+            height = self.mask.shape[0]
+        else:
+            height, width = self.height, self.width
+
+        # Get max font size
+        if self.max_font_size is None:
+            max_font_size = max(w[1] for w in self.layout_)
+        else:
+            max_font_size = self.max_font_size
+
         # Text buffer
         result = []
+
+        # Get font information
+        font = ImageFont.truetype(
+            self.font_path, int(max_font_size * self.scale))
+        raw_font_family, raw_font_style = font.getname()
+        # TODO properly escape/quote this name?
+        font_family = repr(raw_font_family)
+        # TODO better support for uncommon font styles/weights?
+        raw_font_style = raw_font_style.lower()
+        if 'bold' in raw_font_style:
+            font_weight = 'bold'
+        else:
+            font_weight = 'normal'
+        if 'italic' in raw_font_style:
+            font_style = 'italic'
+        elif 'oblique' in raw_font_style:
+            font_style = 'oblique'
+        else:
+            font_style = 'normal'
 
         # For each word in layout
         for (word, count), font_size, (y, x), orientation, color in self.layout_:
@@ -1044,7 +1085,20 @@ class WordCloud(object):
             }
             )
 
-        return result
+        return {
+            "words": result,
+            "style":
+                '<style>' +
+                'text{{' +
+                'font-family:{};' +
+                'font-weight:{};' +
+                'font-style:{};' +
+                '}}' +
+                '</style>'.format(
+                    font_family,
+                    font_weight,
+                    font_style
+                )}
 
     def _get_bolean_mask(self, mask):
         """Cast to two dimensional boolean mask."""
