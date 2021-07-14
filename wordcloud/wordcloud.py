@@ -1032,8 +1032,7 @@ class WordCloud(object):
         font = ImageFont.truetype(
             self.font_path, int(max_font_size * self.scale))
         raw_font_family, raw_font_style = font.getname()
-        # TODO properly escape/quote this name?
-        font_family = repr(raw_font_family)
+        font_family = raw_font_family
         # TODO better support for uncommon font styles/weights?
         raw_font_style = raw_font_style.lower()
         if 'bold' in raw_font_style:
@@ -1128,18 +1127,11 @@ class WordCloud(object):
 
         return {
             "words": result,
-            "style":
-                'text{{'
-                'font-family:{};'
-                'font-weight:{};'
-                'font-style:{};'
-                'src:url("{}")format("woff");'
-                '}}'.format(
-                    font_family,
-                    font_weight,
-                    font_style,
-                    url
-                )}
+            'style': 'text{{font-family:"%s";'
+                     'font-weight:%s;'
+                     'font-style:%s;'
+                     'src:url(%s)format("woff");}}' % (font_family, font_weight, font_style, url)
+        }
 
     def _get_bolean_mask(self, mask):
         """Cast to two dimensional boolean mask."""
