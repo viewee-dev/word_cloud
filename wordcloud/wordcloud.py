@@ -1000,7 +1000,7 @@ class WordCloud(object):
                 )
             )
 
-    def to_attribute(self):
+    def to_attribute(self, optimize_embedded_font=True, embed_image=False):
         """Export to attribute for react component.
 
         content : string
@@ -1047,6 +1047,47 @@ class WordCloud(object):
         else:
             font_style = 'normal'
 
+        # Embed font, if requested
+
+        # Import here, to avoid hard dependency on fonttools
+        import fontTools
+        import fontTools.subset
+
+        # Subset options
+        options = fontTools.subset.Options(
+
+            # Small impact on character shapes, but reduce size a lot
+            hinting=not optimize_embedded_font,
+
+            # On small subsets, can improve size
+            desubroutinize=optimize_embedded_font,
+
+            # Try to be lenient
+            ignore_missing_glyphs=True,
+        )
+
+        # Load and subset font
+        ttf = fontTools.subset.load_font(self.font_path, options)
+        subsetter = fontTools.subset.Subsetter(options)
+        characters = {c for item in self.layout_ for c in item[0][0]}
+        text = ''.join(characters)
+        subsetter.populate(text=text)
+        subsetter.subset(ttf)
+
+        # Export as WOFF
+        # TODO is there a better method, i.e. directly export to WOFF?
+        buffer = io.BytesIO()
+        ttf.saveXML(buffer)
+        buffer.seek(0)
+        woff = fontTools.ttLib.TTFont(flavor='woff')
+        woff.importXML(buffer)
+
+        # Create stylesheet with embedded font face
+        buffer = io.BytesIO()
+        woff.save(buffer)
+        data = base64.b64encode(buffer.getbuffer()).decode('ascii')
+        url = 'data:application/font-woff;charset=utf-8;base64,' + data
+
         # For each word in layout
         for (word, count), font_size, (y, x), orientation, color in self.layout_:
             x *= self.scale
@@ -1088,16 +1129,16 @@ class WordCloud(object):
         return {
             "words": result,
             "style":
-                '<style>' +
-                'text{{' +
-                'font-family:{};' +
-                'font-weight:{};' +
-                'font-style:{};' +
-                '}}' +
-                '</style>'.format(
+                'text{{'
+                'font-family:{};'
+                'font-weight:{};'
+                'font-style:{};'
+                'src:url("{}")format("woff");'
+                '}}'.format(
                     font_family,
                     font_weight,
-                    font_style
+                    font_style,
+                    url
                 )}
 
     def _get_bolean_mask(self, mask):
