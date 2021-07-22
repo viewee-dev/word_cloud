@@ -1122,15 +1122,21 @@ class WordCloud(object):
                 'font_size': font_size * self.scale,
                 'color': color,
                 'word': saxutils.escape(word)
-            }
-            )
+            })
+            
 
         return {
             "words": result,
-            'style': 'text{{font-family:"%s";'
+            'style': '@font-face{{'
+                     'font-family:%s;'
                      'font-weight:%s;'
                      'font-style:%s;'
-                     'src:url(%s)format("woff");}}' % (font_family, font_weight, font_style, url)
+                     'src:url("%s")format("woff");'
+                     '}};'
+                     'text{{font-family:%s;'
+                     'font-weight:%s;'
+                     'font-style:%s;'
+                     '}};' % (font_family, font_weight, font_style, url, font_family, font_weight, font_style)
         }
 
     def _get_bolean_mask(self, mask):
