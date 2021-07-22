@@ -1127,16 +1127,11 @@ class WordCloud(object):
 
         return {
             "words": result,
-            'style': '@font-face{{'
-                     'font-family:%s;'
+            'style': 'text{font-family:%s;'
                      'font-weight:%s;'
                      'font-style:%s;'
                      'src:url("%s")format("woff");'
-                     '}};'
-                     'text{{font-family:%s;'
-                     'font-weight:%s;'
-                     'font-style:%s;'
-                     '}};' % (font_family, font_weight, font_style, url, font_family, font_weight, font_style)
+                     '}' % (font_family, font_weight, font_style, url)
         }
 
     def _get_bolean_mask(self, mask):
